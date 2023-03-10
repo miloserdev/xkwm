@@ -1,0 +1,1 @@
+nano xkwm.c && gcc xkwm.c -o xkwm -lX11 -w && ls -l ./xkwm --block-size=K && cp ./xkwm ~/xkwm

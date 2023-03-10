@@ -1,0 +1,22 @@
+
+
+X.Org X Server 1.21.1.3
+X Protocol Version 11, Revision 0
+Current Operating System: Linux arch 5.18.10-zen1-1-zen #1 ZEN SMP PREEMPT_DYNAMIC Thu, 07 Jul 2022 17:18:11 +0000 x86_64
+Kernel command line: BOOT_IMAGE=/boot/vmlinuz-linux-zen root=UUID=9dc633a4-4289-445e-bac6-9ca5fb1fe884 rw ec_sys.write_support=1 nouveau.modeset=0 rd.driver.blacklist=nouveau loglevel=3 nouveau.blacklist=1 ec_sys.write_support=1 CONFIG_ACPI_EC_DEBUGFS=y acpi_enforce_resources=lax acpi_backlight=vendor acpi_osi=Windows quiet splash
+ 
+Current version of pixman: 0.40.0
+	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+(==) Log file: "/var/log/Xorg.0.log", Time: Tue Aug  9 12:16:04 2022
+(==) Using config file: "/etc/X11/xorg.conf"
+(==) Using config directory: "/etc/X11/xorg.conf.d"
+(==) Using system config directory "/usr/share/X11/xorg.conf.d"
+(EE) Failed to open authorization file "/tmp/serverauth.XokfBSqwya": No such file or directory
+xinit: connection to X server lost
+
+waiting for X server to shut down (II) Server terminated successfully (0). Closing log file.
+

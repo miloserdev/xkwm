@@ -1,0 +1,388 @@
+/*
+ ============================================================================
+ Name        : x11s.c
+ Author      : 
+ Version     :
+ Copyright   : Your copyright notice
+ Description : Hello World in C, Ansi-style
+ ============================================================================
+ */
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <X11/cursorfont.h>
+#include <X11/keysym.h>
+#include <X11/Xatom.h>
+#include <X11/Xlib.h>
+#include <X11/Xproto.h>
+#include <X11/Xutil.h>
+#ifdef XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif /* XINERAMA */
+//#include <X11/Xft/Xft.h>
+
+typedef struct Monitor Monitor;
+
+static Display *dpy;
+static Monitor *mons;
+static Window root;
+static Window container;
+
+int rootw;
+
+static Drawable drawable;
+static GC gc;
+static GC gc_text;
+
+static int screen;
+unsigned int sw;
+unsigned int sh;
+
+
+bool drag = false;
+
+unsigned long _RGB(int r,int g, int b) {
+    return b + (g<<8) + (r<<16);
+}
+
+unsigned long black, white, red, green, blue;
+
+Font font;
+Cursor cursor;
+Cursor cursor_move;
+Cursor cursor_size;
+
+
+Window under_pointer() {
+	int ret, pos;
+	unsigned int mask;
+	Window child, contnr;
+	ret = XQueryPointer(dpy, root, &contnr, &child, &pos, &pos, &pos, &pos, &mask);
+	if (!ret) return NULL;
+	return ret;
+}
+
+
+
+
+void handle_key_press(XKeyEvent *e) {
+	switch(XkbKeycodeToKeysym(dpy, e->keycode, 0, 0)) {
+	case XK_7:
+		Window window = under_pointer();
+		break;
+	case XK_Alt_L:
+		drag = true;
+		break;
+	case XK_2:
+		break;
+	case XK_1:
+		if(fork() == 0) {
+			if (dpy) close(ConnectionNumber(dpy));
+			char *cmd[] = { "st", NULL };
+			setsid();
+			execvp(cmd[0], cmd);
+		}
+		break;
+
+//	case XK_F4:
+//		if (&e->state && Mod1Mask) {
+//            XEvent event;
+//          event.xclient.type = ClientMessage;
+//            event.xclient.window = e->window;
+//            event.xclient.message_type = XInternAtom(dpy, "WM_PROTOCOLS", True);
+//            event.xclient.format = 32;
+//            event.xclient.data.l[0] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+//            event.xclient.data.l[1] = CurrentTime;
+//            int result = XSendEvent(dpy, e->window, False, NoEventMask, &event);
+
+//          XKillClient(dpy, e->window);
+//		}
+	}
+}
+
+
+void handle_key_release(XKeyEvent *e) {
+	switch(XkbKeycodeToKeysym(dpy, e->keycode, 0, 0)) {
+	case XK_Alt_L:
+		drag = false;
+		break;;
+	}
+}
+
+
+void handle_configure_request(XConfigureRequestEvent *e) {
+
+}
+
+#define W_WIDTH 640
+#define W_HEIGHT 480
+#define X_POS 100
+#define Y_POS 120
+#define BORDER_WIDTH 200
+
+void handle_map_request(XMapRequestEvent *e) {
+
+//	XWindowAttributes attrs;
+//	XGetWindowAttributes(dpy, e->window, &attrs);
+
+	Pixmap color = 0x00fefe;
+
+//	Window frame = XCreateSimpleWindow(dpy, root, attrs.x, attrs.y, attrs.width, (attrs.height+25), 3, color, color);
+
+//	XSetWindowBorderWidth(dpy, e->window, (unsigned int) 20);
+
+//	XChangeWindowAttributes(dpy, e->window, CWEventMask | CWCursor, &attrs);
+
+//	XSync(dpy, False);
+
+//	XRectangle rectangles[4] = { 
+//	{ X_POS, Y_POS, W_WIDTH, BORDER_WIDTH },
+//	{ X_POS, Y_POS, BORDER_WIDTH, W_HEIGHT },
+//	{ X_POS, W_HEIGHT - BORDER_WIDTH, W_WIDTH, W_HEIGHT },
+//	{ W_WIDTH - BORDER_WIDTH, Y_POS, BORDER_WIDTH, W_HEIGHT } };
+
+//	XGCValues xgc;
+//	xgc.line_width = 10;
+//	GC gc = XCreateGC(dpy, e->window, GCLineWidth, &xgc);
+
+	XWindowChanges wc;
+	wc.border_width = 30;
+	XConfigureWindow(dpy, e->window, CWBorderWidth,  &wc);
+	XSetWindowBorder(dpy, e->window, _RGB(255,66,66) );
+//	XDrawRectangles(dpy, e->window, gc, rectangles, 4);
+
+//	XReparentWindow(dpy, e->window, root, 0, 25);
+
+//	XMoveWindow(dpy, e->window, 25, 25);
+//	XResizeWindow(dpy, e->window, 200, 200);
+
+//	XSelectInput(dpy, e->window, SubstructureRedirectMask | StructureNotifyMask);
+
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_7), AnyModifier, e->window, False, GrabModeAsync, GrabModeAsync);
+
+	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_Alt_L), AnyModifier, e->window, False, GrabModeAsync, GrabModeAsync);
+	XGrabButton(dpy, Button1, Mod1Mask, e->window, False, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+	XGrabButton(dpy, Button3, Mod1Mask, e->window, False, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+
+	XSetWindowAttributes attrs;
+	XGetWindowAttributes(dpy, e->window, &attrs);
+	attrs.border_pixel = _RGB(255,66,66);
+	attrs.background_pixel = white;
+	XChangeWindowAttributes(dpy, e->window, CWEventMask | CWCursor, &attrs);
+
+	XMapWindow(dpy, e->window);
+//	XRaiseWindow(dpy, e->window);
+//	XSetInputFocus(dpy, e->window, 0, CurrentTime);
+
+}
+
+
+void handle_button_press(XButtonEvent *e) {
+	if(drag /*&& (e->button == Button1)*/ ) {
+		int cx, cy, rx, ry = 0;
+		unsigned int maskq = 0;
+
+		XWindowAttributes xwa;
+		XGetWindowAttributes(dpy, e->window, &xwa);
+
+		Window c, r;
+		XQueryPointer(dpy, e->window, &c, &r, &rx, &ry, &cx, &cy, &maskq);
+
+//		XSetInputFocus(dpy, e->window, 0, CurrentTime);
+		Cursor cur = (e->button == Button1) ? cursor_move : cursor_size;
+		XGrabPointer(dpy, root, True, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, cur, CurrentTime);
+		XEvent ev;
+
+		do {
+
+			XMaskEvent(dpy, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask | ExposureMask | SubstructureRedirectMask, &ev);
+			switch(ev.type) {
+				case ConfigureRequest:
+				case Expose:
+				case MapRequest:
+					//handle_map_request(&ev);
+					break;
+				case MotionNotify:
+			//		XSelectInput(dpy, e->window, SubstructureRedirectMask | StructureNotifyMask);
+
+					unsigned int mask;
+			//		XSetWindowAttributes attrs;
+			//		attrs.event_mask = 0;
+			//		XChangeWindowAttributes(dpy, e->window, NoEventMask, &attrs);
+			//		XQueryPointer(dpy, DefaultRootWindow(dpy), &container, &container, &e->x, &e->y, &e->x, &e->y, &mask);
+//					XResizeWindow(dpy, e->window, 1000, 1000);
+					if (e->button == Button1) {
+						XMoveWindow(dpy, e->window, xwa.x + (ev.xmotion.x - rx), xwa.y + (ev.xmotion.y - ry) );
+					} else {
+						XResizeWindow(dpy, e->window, ev.xmotion.x - (xwa.x), ev.xmotion.y - (xwa.y) );
+					}
+
+			//		XWindowAttributes xwa;
+			//		XTranslateCoordinates(dpy, window, container, 0, 0, &e->x, &e->y, &window);
+			//		XGetWindowAttributes(dpy, window, &xwa);
+					break;
+			}
+//			update();
+		} while (ev.type != ButtonRelease);
+		XUngrabPointer(dpy, CurrentTime);
+	}
+}
+
+
+void handle_button_release(XButtonEvent *e) {
+
+}
+
+
+//		Window window = XGetInputFocus(dpy, &e->window, False);
+
+
+void handle_motion_notify(XMotionEvent *e) {
+
+}
+
+
+void handle_unmap_notify(XUnmapEvent *e) {
+
+}
+
+
+int main(void) {
+
+	dpy = XOpenDisplay(NULL);
+	screen = DefaultScreen(dpy);
+
+	sw = DisplayWidth(dpy, screen);
+	sh = DisplayHeight(dpy, screen);
+	root = RootWindow(dpy, screen);
+	rootw = XDefaultRootWindow(dpy);
+
+	black = BlackPixel(dpy, screen);
+	white = WhitePixel(dpy, screen);
+
+	XGrabServer(dpy);
+	XSync(dpy, False);
+	XFlush(dpy);
+
+	font = XLoadFont(dpy, "-*-*-*-R-Normal--*-180-100-100-*-*");
+	cursor = XCreateFontCursor(dpy, XC_left_ptr);
+	cursor_move = XCreateFontCursor(dpy, XC_fleur);
+	cursor_size = XCreateFontCursor(dpy, XC_sizing);
+
+//	sigset_t sigmask, oldsigmask;
+//	sigprocmask(2, &sigmask, &oldsigmask);
+
+	XSetWindowAttributes attrs;
+	attrs.event_mask =	SubstructureRedirectMask |
+				SubstructureNotifyMask |
+				StructureNotifyMask |
+				ExposureMask |
+				KeyPressMask |
+				KeyReleaseMask |
+				PointerMotionMask |
+				ButtonPressMask |
+				ButtonReleaseMask |
+				EnterWindowMask |
+				FocusChangeMask |
+				PropertyChangeMask |
+				StructureNotifyMask;
+
+	attrs.do_not_propagate_mask = 0;
+
+	attrs.cursor = cursor;
+//	attrs.background_pixel = _RGB(66,66,66);
+//	attrs.foreground_pixel = _RGB(66,66,66);
+	unsigned long attrs_mask = CWEventMask | NoEventMask | CWBackPixel;
+
+	XSelectInput(dpy, root, SubstructureRedirectMask | StructureNotifyMask);
+	XSync(dpy, False);
+//
+//
+//	XSelectInput(dpy, root, attrs.event_mask);
+//	XSync(dpy, False);
+
+//	container = XCreateWindow(dpy, rootw, 50, 50, sw, sh, 1, CopyFromParent, InputOutput, CopyFromParent, attrs_mask, &attrs);
+
+
+//	XGrabButton(dpy, Button1, Mod1Mask, root, False, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+//	XGrabButton(dpy, Button3, Mod1Mask, root, False, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_F4), Mod1Mask, root, False, GrabModeAsync, GrabModeAsync);
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_Tab), Mod1Mask, root, False, GrabModeAsync, GrabModeAsync);
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_Alt_L), AnyModifier, root, False, GrabModeAsync, GrabModeAsync);
+//	XGrabPointer(dpy, root, True, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, cursor_move, CurrentTime);
+
+//	XGrabButton(dpy, Button1, Mod1Mask, rootw, False, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+//	XGrabButton(dpy, Button3, Mod1Mask, rootw, False, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_F4), Mod1Mask, rootw, False, GrabModeAsync, GrabModeAsync);
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_Tab), Mod1Mask, rootw, False, GrabModeAsync, GrabModeAsync);
+//	XGrabKey(dpy, XKeysymToKeycode(dpy, XK_Alt_L), AnyModifier, rootw, False, GrabModeAsync, GrabModeAsync);
+//	XGrabPointer(dpy, container, True, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, cursor_move, CurrentTime);
+
+
+
+	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &attrs);
+
+	XSync(dpy, False);
+
+	XGCValues xgc;
+	xgc.background = white;
+	xgc.foreground = black;
+	gc = XCreateGC(dpy, root, GCForeground | GCBackground, &xgc);
+	//XSetBackground(dpy, gc, _RGB(66,66,66) );
+	//XSetForeground(dpy, gc, _RGB(66,66,66) );
+	XFillRectangle(dpy, root, gc, 0, 0, sw, sh);
+
+	gc_text = XCreateGC(dpy, root, GCForeground | GCBackground, &xgc);
+	XSetFont(dpy, gc_text, font);
+
+	XMapWindow(dpy, root);
+
+	XUngrabServer(dpy);
+	XSync(dpy, False);
+	XFlush(dpy);
+
+	XSync(dpy, False);
+
+	XEvent e;
+	XSync(dpy, False);
+	while (true) {
+		//update();
+
+		XNextEvent(dpy, &e);
+
+		switch (e.type) {
+		case Expose:
+			update();
+			break;
+		case KeyPress:
+			handle_key_press(&e.xkey);
+			break;
+		case KeyRelease:
+			handle_key_release(&e.xkey);
+			break;
+//		case ConfigureRequest:
+//			handle_configure_request(&e.xconfigurerequest);
+//			break;
+		case MapRequest:
+			handle_map_request(&e.xmaprequest);
+			break;
+		case ButtonPress:
+			handle_button_press(&e.xbutton);
+			break;
+		case ButtonRelease:
+			handle_button_release(&e.xbutton);
+			break;
+		case MotionNotify:
+			handle_motion_notify(&e.xmotion);
+			break;
+		case UnmapNotify:
+			handle_unmap_notify(&e.xunmap);
+			break;
+		}
+
+	}
+	return EXIT_SUCCESS;
+}
