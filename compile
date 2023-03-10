@@ -1,1 +1,1 @@
-gcc x11s.c -o x11s -lX11 -w && ls -l ./x11s --block-size=K && cp ./x11s ~/x11s
+gcc xkwm.c -o xkwm -lX11 -w && cp ./xkwm ~/xkwm
