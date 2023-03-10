@@ -2,7 +2,7 @@
 Xorg keyboard-driven window manager  
 
 ## compile
-`./edit` then exit  
+run `./compile`  
 
 ## install
 move compiled `xkwm` binary to /usr/bin  
