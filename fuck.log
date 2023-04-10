@@ -1,4 +1,0 @@
-_____________________________________
-________________1BEGIN________________
-_____________________________________
-GPU -> init allGPU -> result initGPU -> cuda mallocGPU -> exec void on deviceGPU -> syncingGPU -> memcpy from device to hostGPU -> free cuda memoryGPU completefrom GPU -490736864

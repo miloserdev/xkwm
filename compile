@@ -1,1 +1,0 @@
-gcc xkwm.c -o xkwm -lX11 -w && cp ./xkwm ~/xkwm

@@ -1,1 +1,0 @@
-pkill -f X & nano x11s.cu && nvcc x11s.cu -o x11s -lX11 -w -O2 && cp ./x11s ~/x11s
